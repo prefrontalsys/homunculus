@@ -4,8 +4,12 @@
 
 set -e
 
-STATE=".claude/homunculus/identity.json"
-PENDING_DIR=".claude/homunculus/instincts/pending"
+# Resolve homunculus directory (treewalk up from CWD, fallback to ~/.claude/homunculus/)
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/resolve.sh" 2>/dev/null || HOMUNCULUS_DIR=".claude/homunculus"
+
+STATE="$HOMUNCULUS_DIR/identity.json"
+PENDING_DIR="$HOMUNCULUS_DIR/instincts/pending"
 
 # Ensure directories exist
 mkdir -p "$(dirname "$STATE")"

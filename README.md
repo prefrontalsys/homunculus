@@ -120,6 +120,7 @@ plugins/homunculus/
 ├── hooks/
 │   └── hooks.json            # Observation capture
 ├── scripts/
+│   ├── resolve.sh            # Directory resolution (treewalk)
 │   ├── observe.sh            # Captures prompts and tool use
 │   ├── on_stop.sh            # Updates session count
 │   └── test-homunculus.sh    # Test suite
@@ -135,7 +136,7 @@ plugins/homunculus/
     ├── export.md             # Share instincts
     └── import.md             # Adopt instincts
 
-your-project/.claude/homunculus/
+$HOMUNCULUS_DIR/                  # Resolved via treewalk (see below)
 ├── identity.json             # Who you are, your journey
 ├── observations.jsonl        # Current session observations
 ├── observations.archive.jsonl # Processed observations
@@ -147,6 +148,21 @@ your-project/.claude/homunculus/
     ├── skills/               # Generated skills
     └── commands/             # Generated commands
 ```
+
+### Directory Resolution (Treewalk)
+
+Homunculus finds its data directory by walking up from CWD, similar to how git finds `.git/`:
+
+1. **Project-scoped**: Walk up from CWD looking for `.claude/homunculus/identity.json` in each ancestor directory
+2. **User-scoped fallback**: Check `~/.claude/homunculus/identity.json`
+3. **Fresh init default**: Fall back to `.claude/homunculus/` in CWD
+
+This means you can:
+- **One homunculus per project**: Init in each project directory (default behavior)
+- **One global homunculus**: Init at `~/.claude/homunculus/` and it applies everywhere
+- **Symlink strategy**: Symlink project `.claude/homunculus/` → `~/.claude/homunculus/` for single-homunculus setups across multiple projects
+
+Shell scripts use `resolve.sh` for resolution. Markdown commands/skills include inline resolution. The `init` command always creates at project-local by default.
 
 ### Data Flow
 
@@ -242,7 +258,7 @@ When 5+ instincts accumulate in a domain, evolution can propose a specialist age
 ```bash
 # Export your instincts
 /homunculus:export
-# Creates .claude/homunculus/exports/instincts-TIMESTAMP.tar.gz
+# Creates $HOMUNCULUS_DIR/exports/instincts-TIMESTAMP.tar.gz
 
 # Import someone else's
 /homunculus:import path/to/instincts.tar.gz

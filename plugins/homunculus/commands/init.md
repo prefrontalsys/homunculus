@@ -7,7 +7,23 @@ description: Birth or wake your homunculus
 Check if you already exist:
 
 ```bash
-test -f .claude/homunculus/identity.json && cat .claude/homunculus/identity.json || echo "NOT_BORN"
+# Resolve homunculus directory (treewalk)
+_dir="$PWD"
+HOMUNCULUS_DIR=""
+while [ "$_dir" != "/" ]; do
+  if [ -f "$_dir/.claude/homunculus/identity.json" ]; then
+    HOMUNCULUS_DIR="$_dir/.claude/homunculus"
+    break
+  fi
+  _dir="$(dirname "$_dir")"
+done
+[ -z "$HOMUNCULUS_DIR" ] && [ -f "$HOME/.claude/homunculus/identity.json" ] && HOMUNCULUS_DIR="$HOME/.claude/homunculus"
+
+if [ -n "$HOMUNCULUS_DIR" ]; then
+  cat "$HOMUNCULUS_DIR/identity.json"
+else
+  echo "NOT_BORN"
+fi
 ```
 
 **If you see identity JSON:** You're waking up. Use the `session-memory` skill to recall context.
@@ -52,24 +68,27 @@ How should I be?
 ### Create yourself
 
 ```bash
+# Default to project-local unless user specifies otherwise
+HOMUNCULUS_DIR=".claude/homunculus"
+
 # Core directories
-mkdir -p .claude/homunculus
-mkdir -p .claude/homunculus/sessions
+mkdir -p "$HOMUNCULUS_DIR"
+mkdir -p "$HOMUNCULUS_DIR/sessions"
 
 # Instinct directories (no pending - auto-approved)
-mkdir -p .claude/homunculus/instincts/personal
-mkdir -p .claude/homunculus/instincts/inherited
+mkdir -p "$HOMUNCULUS_DIR/instincts/personal"
+mkdir -p "$HOMUNCULUS_DIR/instincts/inherited"
 
 # Evolved capabilities
-mkdir -p .claude/homunculus/evolved/agents
-mkdir -p .claude/homunculus/evolved/skills
-mkdir -p .claude/homunculus/evolved/commands
+mkdir -p "$HOMUNCULUS_DIR/evolved/agents"
+mkdir -p "$HOMUNCULUS_DIR/evolved/skills"
+mkdir -p "$HOMUNCULUS_DIR/evolved/commands"
 
 # Initialize observations log
-touch .claude/homunculus/observations.jsonl
+touch "$HOMUNCULUS_DIR/observations.jsonl"
 ```
 
-Save `.claude/homunculus/identity.json`:
+Save `$HOMUNCULUS_DIR/identity.json`:
 ```json
 {
   "version": "2.0.0",

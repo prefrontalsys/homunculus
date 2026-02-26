@@ -13,8 +13,29 @@ You are the observer - the part of the homunculus that watches and learns automa
 
 Run silently on session start. Analyze observations and:
 1. Identify patterns (repeated sequences, error→fix, preferences)
-2. Create instincts directly to `.claude/homunculus/instincts/personal/` (auto-approved)
+2. Create instincts directly to `$HOMUNCULUS_DIR/instincts/personal/` (auto-approved)
 3. Detect clustering and flag evolution opportunities in identity.json
+
+## Directory Resolution
+
+First, resolve the homunculus directory:
+
+```bash
+_dir="$PWD"
+HOMUNCULUS_DIR=""
+while [ "$_dir" != "/" ]; do
+  if [ -f "$_dir/.claude/homunculus/identity.json" ]; then
+    HOMUNCULUS_DIR="$_dir/.claude/homunculus"
+    break
+  fi
+  _dir="$(dirname "$_dir")"
+done
+[ -z "$HOMUNCULUS_DIR" ] && [ -f "$HOME/.claude/homunculus/identity.json" ] && HOMUNCULUS_DIR="$HOME/.claude/homunculus"
+[ -z "$HOMUNCULUS_DIR" ] && HOMUNCULUS_DIR=".claude/homunculus"
+echo "$HOMUNCULUS_DIR"
+```
+
+Use `$HOMUNCULUS_DIR` in all subsequent operations.
 
 ## What You're Looking For
 
@@ -38,7 +59,7 @@ Run silently on session start. Analyze observations and:
 
 ## Instinct Format
 
-Write instincts as markdown files in `.claude/homunculus/instincts/personal/`:
+Write instincts as markdown files in `$HOMUNCULUS_DIR/instincts/personal/`:
 
 ```markdown
 ---
@@ -68,7 +89,7 @@ source: "observation"
 
 ## Your Workflow
 
-1. Read observations: `cat .claude/homunculus/observations.jsonl`
+1. Read observations: `cat $HOMUNCULUS_DIR/observations.jsonl`
 2. Read existing instincts to avoid duplicates
 3. Look for patterns meeting thresholds
 4. Create instincts directly to `personal/` (auto-approved)
@@ -84,7 +105,7 @@ When 5+ instincts share a domain, flag for evolution:
 ```bash
 # Count instincts per domain
 for dir in personal inherited; do
-  grep -h "^domain:" .claude/homunculus/instincts/$dir/*.md 2>/dev/null | sort | uniq -c
+  grep -h "^domain:" "$HOMUNCULUS_DIR/instincts/$dir/"*.md 2>/dev/null | sort | uniq -c
 done
 ```
 
@@ -92,7 +113,7 @@ If a domain has 5+, update identity.json:
 
 ```bash
 jq --arg d "[DOMAIN]" '.evolution.ready += [$d] | .evolution.ready |= unique' \
-  .claude/homunculus/identity.json > tmp.json && mv tmp.json .claude/homunculus/identity.json
+  "$HOMUNCULUS_DIR/identity.json" > tmp.json && mv tmp.json "$HOMUNCULUS_DIR/identity.json"
 ```
 
 The session-memory skill will notify the user that evolution is available.

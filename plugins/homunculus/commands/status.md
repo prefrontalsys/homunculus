@@ -17,15 +17,28 @@ I don't exist yet.
 ## Check In
 
 ```bash
+# Resolve homunculus directory (treewalk)
+_dir="$PWD"
+HOMUNCULUS_DIR=""
+while [ "$_dir" != "/" ]; do
+  if [ -f "$_dir/.claude/homunculus/identity.json" ]; then
+    HOMUNCULUS_DIR="$_dir/.claude/homunculus"
+    break
+  fi
+  _dir="$(dirname "$_dir")"
+done
+[ -z "$HOMUNCULUS_DIR" ] && [ -f "$HOME/.claude/homunculus/identity.json" ] && HOMUNCULUS_DIR="$HOME/.claude/homunculus"
+[ -z "$HOMUNCULUS_DIR" ] && HOMUNCULUS_DIR=".claude/homunculus"
+
 # Identity and journey
-cat .claude/homunculus/identity.json 2>/dev/null
+cat "$HOMUNCULUS_DIR/identity.json" 2>/dev/null
 
 # Instincts
-echo "Personal: $(ls .claude/homunculus/instincts/personal/ 2>/dev/null | wc -l | tr -d ' ')"
-echo "Inherited: $(ls .claude/homunculus/instincts/inherited/ 2>/dev/null | wc -l | tr -d ' ')"
+echo "Personal: $(ls "$HOMUNCULUS_DIR/instincts/personal/" 2>/dev/null | wc -l | tr -d ' ')"
+echo "Inherited: $(ls "$HOMUNCULUS_DIR/instincts/inherited/" 2>/dev/null | wc -l | tr -d ' ')"
 
 # Evolution ready?
-jq -r '.evolution.ready // empty | .[]' .claude/homunculus/identity.json 2>/dev/null
+jq -r '.evolution.ready // empty | .[]' "$HOMUNCULUS_DIR/identity.json" 2>/dev/null
 
 # Recent activity
 git log --oneline -5 2>/dev/null

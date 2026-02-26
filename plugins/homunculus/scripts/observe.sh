@@ -5,7 +5,12 @@
 set -e
 
 EVENT_TYPE="${1:-unknown}"
-OBS_FILE=".claude/homunculus/observations.jsonl"
+
+# Resolve homunculus directory (treewalk up from CWD, fallback to ~/.claude/homunculus/)
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/resolve.sh" 2>/dev/null || HOMUNCULUS_DIR=".claude/homunculus"
+
+OBS_FILE="$HOMUNCULUS_DIR/observations.jsonl"
 
 # Ensure directory exists
 mkdir -p "$(dirname "$OBS_FILE")"

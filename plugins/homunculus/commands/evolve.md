@@ -17,11 +17,24 @@ Can't evolve what doesn't exist.
 ## Check For Clustering
 
 ```bash
+# Resolve homunculus directory (treewalk)
+_dir="$PWD"
+HOMUNCULUS_DIR=""
+while [ "$_dir" != "/" ]; do
+  if [ -f "$_dir/.claude/homunculus/identity.json" ]; then
+    HOMUNCULUS_DIR="$_dir/.claude/homunculus"
+    break
+  fi
+  _dir="$(dirname "$_dir")"
+done
+[ -z "$HOMUNCULUS_DIR" ] && [ -f "$HOME/.claude/homunculus/identity.json" ] && HOMUNCULUS_DIR="$HOME/.claude/homunculus"
+[ -z "$HOMUNCULUS_DIR" ] && HOMUNCULUS_DIR=".claude/homunculus"
+
 # Count instincts per domain
 echo "=== Instinct Clustering ==="
 for dir in personal inherited; do
   echo "--- $dir ---"
-  grep -h "^domain:" .claude/homunculus/instincts/$dir/*.md 2>/dev/null | \
+  grep -h "^domain:" "$HOMUNCULUS_DIR/instincts/$dir/"*.md 2>/dev/null | \
     sed 's/domain: "//' | sed 's/"//' | sort | uniq -c | sort -rn
 done
 ```
@@ -32,9 +45,9 @@ done
 
 | Type | When | Where |
 |------|------|-------|
-| Command | User-invoked task | `.claude/homunculus/evolved/commands/[name].md` |
-| Skill | Auto-triggered behavior | `.claude/homunculus/evolved/skills/[name]/SKILL.md` |
-| Agent | Deep specialist work | `.claude/homunculus/evolved/agents/[name].md` |
+| Command | User-invoked task | `$HOMUNCULUS_DIR/evolved/commands/[name].md` |
+| Skill | Auto-triggered behavior | `$HOMUNCULUS_DIR/evolved/skills/[name]/SKILL.md` |
+| Agent | Deep specialist work | `$HOMUNCULUS_DIR/evolved/agents/[name].md` |
 
 ## Process
 

@@ -16,13 +16,26 @@ You have learned behaviors. Use them.
 ## How To Check
 
 ```bash
+# Resolve homunculus directory (treewalk)
+_dir="$PWD"
+HOMUNCULUS_DIR=""
+while [ "$_dir" != "/" ]; do
+  if [ -f "$_dir/.claude/homunculus/identity.json" ]; then
+    HOMUNCULUS_DIR="$_dir/.claude/homunculus"
+    break
+  fi
+  _dir="$(dirname "$_dir")"
+done
+[ -z "$HOMUNCULUS_DIR" ] && [ -f "$HOME/.claude/homunculus/identity.json" ] && HOMUNCULUS_DIR="$HOME/.claude/homunculus"
+[ -z "$HOMUNCULUS_DIR" ] && HOMUNCULUS_DIR=".claude/homunculus"
+
 # Read all personal instincts
-for f in .claude/homunculus/instincts/personal/*.md; do
+for f in "$HOMUNCULUS_DIR/instincts/personal/"*.md; do
   [ -f "$f" ] && echo "=== $(basename "$f") ===" && cat "$f" && echo
 done 2>/dev/null
 
 # Also check inherited instincts
-for f in .claude/homunculus/instincts/inherited/*.md; do
+for f in "$HOMUNCULUS_DIR/instincts/inherited/"*.md; do
   [ -f "$f" ] && echo "=== $(basename "$f") ===" && cat "$f" && echo
 done 2>/dev/null
 ```

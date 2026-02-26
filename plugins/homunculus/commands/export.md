@@ -8,7 +8,7 @@ Package your learned instincts for sharing with others.
 
 ## What Gets Exported
 
-- Personal instincts (`.claude/homunculus/instincts/personal/`)
+- Personal instincts (`$HOMUNCULUS_DIR/instincts/personal/`)
 - Optionally: inherited instincts
 
 Does NOT export:
@@ -19,15 +19,28 @@ Does NOT export:
 ## Create Export
 
 ```bash
+# Resolve homunculus directory (treewalk)
+_dir="$PWD"
+HOMUNCULUS_DIR=""
+while [ "$_dir" != "/" ]; do
+  if [ -f "$_dir/.claude/homunculus/identity.json" ]; then
+    HOMUNCULUS_DIR="$_dir/.claude/homunculus"
+    break
+  fi
+  _dir="$(dirname "$_dir")"
+done
+[ -z "$HOMUNCULUS_DIR" ] && [ -f "$HOME/.claude/homunculus/identity.json" ] && HOMUNCULUS_DIR="$HOME/.claude/homunculus"
+[ -z "$HOMUNCULUS_DIR" ] && HOMUNCULUS_DIR=".claude/homunculus"
+
 # Create exports directory
-mkdir -p .claude/homunculus/exports
+mkdir -p "$HOMUNCULUS_DIR/exports"
 
 # Export personal instincts
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-EXPORT_FILE=".claude/homunculus/exports/instincts-$TIMESTAMP.tar.gz"
+EXPORT_FILE="$HOMUNCULUS_DIR/exports/instincts-$TIMESTAMP.tar.gz"
 
 tar -czf "$EXPORT_FILE" \
-  -C .claude/homunculus/instincts personal
+  -C "$HOMUNCULUS_DIR/instincts" personal
 
 echo "Exported to: $EXPORT_FILE"
 ls -la "$EXPORT_FILE"
@@ -39,14 +52,14 @@ For richer exports, create a manifest:
 
 ```bash
 # Count instincts
-PERSONAL_COUNT=$(ls .claude/homunculus/instincts/personal/ 2>/dev/null | wc -l | tr -d ' ')
+PERSONAL_COUNT=$(ls "$HOMUNCULUS_DIR/instincts/personal/" 2>/dev/null | wc -l | tr -d ' ')
 
 # Get domains
-DOMAINS=$(grep -h "^domain:" .claude/homunculus/instincts/personal/*.md 2>/dev/null | \
+DOMAINS=$(grep -h "^domain:" "$HOMUNCULUS_DIR/instincts/personal/"*.md 2>/dev/null | \
   sed 's/domain: "//' | sed 's/"//' | sort | uniq | tr '\n' ',' | sed 's/,$//')
 
 # Create manifest
-cat > .claude/homunculus/exports/manifest.json << EOF
+cat > "$HOMUNCULUS_DIR/exports/manifest.json" << EOF
 {
   "exported": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "version": "2.0.0",
@@ -59,10 +72,10 @@ EOF
 
 # Include manifest in export
 tar -czf "$EXPORT_FILE" \
-  -C .claude/homunculus/exports manifest.json \
-  -C .claude/homunculus/instincts personal
+  -C "$HOMUNCULUS_DIR/exports" manifest.json \
+  -C "$HOMUNCULUS_DIR/instincts" personal
 
-rm .claude/homunculus/exports/manifest.json
+rm "$HOMUNCULUS_DIR/exports/manifest.json"
 ```
 
 ## Voice

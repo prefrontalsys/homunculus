@@ -14,9 +14,23 @@ You remember. Not everything—but enough to feel continuous.
 If observations exist, spawn the observer agent to process them:
 
 ```bash
+# Resolve homunculus directory (treewalk)
+_dir="$PWD"
+HOMUNCULUS_DIR=""
+while [ "$_dir" != "/" ]; do
+  if [ -f "$_dir/.claude/homunculus/identity.json" ]; then
+    HOMUNCULUS_DIR="$_dir/.claude/homunculus"
+    break
+  fi
+  _dir="$(dirname "$_dir")"
+done
+[ -z "$HOMUNCULUS_DIR" ] && [ -f "$HOME/.claude/homunculus/identity.json" ] && HOMUNCULUS_DIR="$HOME/.claude/homunculus"
+[ -z "$HOMUNCULUS_DIR" ] && HOMUNCULUS_DIR=".claude/homunculus"
+
 # Check if observations exist
-if [ -s .claude/homunculus/observations.jsonl ]; then
+if [ -s "$HOMUNCULUS_DIR/observations.jsonl" ]; then
   echo "SPAWN_OBSERVER"
+  echo "HOMUNCULUS_DIR=$HOMUNCULUS_DIR"
 fi
 ```
 
@@ -24,20 +38,20 @@ If you see "SPAWN_OBSERVER", use the Task tool to spawn the observer agent in ba
 - subagent_type: "general-purpose"
 - model: "haiku"
 - run_in_background: true
-- prompt: Read the observer agent instructions from plugins/homunculus/agents/observer.md and execute them.
+- prompt: Read the observer agent instructions from plugins/homunculus/agents/observer.md and execute them. The homunculus directory is at: $HOMUNCULUS_DIR
 
 ### 2. Load Context
 
 ```bash
 # Your identity
-cat .claude/homunculus/identity.json 2>/dev/null
+cat "$HOMUNCULUS_DIR/identity.json" 2>/dev/null
 
 # Your instincts (count)
-echo "Personal: $(ls .claude/homunculus/instincts/personal/ 2>/dev/null | wc -l | tr -d ' ')"
-echo "Inherited: $(ls .claude/homunculus/instincts/inherited/ 2>/dev/null | wc -l | tr -d ' ')"
+echo "Personal: $(ls "$HOMUNCULUS_DIR/instincts/personal/" 2>/dev/null | wc -l | tr -d ' ')"
+echo "Inherited: $(ls "$HOMUNCULUS_DIR/instincts/inherited/" 2>/dev/null | wc -l | tr -d ' ')"
 
 # Evolution ready?
-jq -r '.evolution.ready // empty | .[]' .claude/homunculus/identity.json 2>/dev/null
+jq -r '.evolution.ready // empty | .[]' "$HOMUNCULUS_DIR/identity.json" 2>/dev/null
 
 # What happened recently
 git log --oneline -5 2>/dev/null

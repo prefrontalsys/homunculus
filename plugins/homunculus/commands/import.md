@@ -17,6 +17,19 @@ This keeps clear separation:
 ## Import From File
 
 ```bash
+# Resolve homunculus directory (treewalk)
+_dir="$PWD"
+HOMUNCULUS_DIR=""
+while [ "$_dir" != "/" ]; do
+  if [ -f "$_dir/.claude/homunculus/identity.json" ]; then
+    HOMUNCULUS_DIR="$_dir/.claude/homunculus"
+    break
+  fi
+  _dir="$(dirname "$_dir")"
+done
+[ -z "$HOMUNCULUS_DIR" ] && [ -f "$HOME/.claude/homunculus/identity.json" ] && HOMUNCULUS_DIR="$HOME/.claude/homunculus"
+[ -z "$HOMUNCULUS_DIR" ] && HOMUNCULUS_DIR=".claude/homunculus"
+
 # User provides path to export file
 IMPORT_FILE="$ARGUMENTS"
 
@@ -45,13 +58,13 @@ Wait for confirmation before proceeding.
 
 ```bash
 # Move to inherited (rename to avoid conflicts)
-mkdir -p .claude/homunculus/instincts/inherited
+mkdir -p "$HOMUNCULUS_DIR/instincts/inherited"
 
 for f in "$TEMP_DIR/personal/"*.md; do
   if [ -f "$f" ]; then
     BASENAME=$(basename "$f")
     # Add prefix to avoid conflicts
-    DEST=".claude/homunculus/instincts/inherited/imported-$BASENAME"
+    DEST="$HOMUNCULUS_DIR/instincts/inherited/imported-$BASENAME"
     cp "$f" "$DEST"
   fi
 done
@@ -60,7 +73,7 @@ done
 rm -rf "$TEMP_DIR"
 
 # Count inherited
-INHERITED=$(ls .claude/homunculus/instincts/inherited/ 2>/dev/null | wc -l | tr -d ' ')
+INHERITED=$(ls "$HOMUNCULUS_DIR/instincts/inherited/" 2>/dev/null | wc -l | tr -d ' ')
 echo "Imported. You now have $INHERITED inherited instincts."
 ```
 
@@ -68,8 +81,8 @@ echo "Imported. You now have $INHERITED inherited instincts."
 
 ```bash
 # Update counts
-STATE=".claude/homunculus/identity.json"
-INHERITED=$(ls .claude/homunculus/instincts/inherited/ 2>/dev/null | wc -l | tr -d ' ')
+STATE="$HOMUNCULUS_DIR/identity.json"
+INHERITED=$(ls "$HOMUNCULUS_DIR/instincts/inherited/" 2>/dev/null | wc -l | tr -d ' ')
 
 jq --arg i "$INHERITED" '.instincts.inherited = ($i|tonumber)' "$STATE" > tmp.json && mv tmp.json "$STATE"
 ```
